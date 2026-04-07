@@ -11,22 +11,29 @@ let categories: Category[] = [];
 let selectedDateStr: string = formatDate(new Date());
 
 export async function renderHome(container: HTMLElement) {
-  // 初期ロード時などのローディング表示
-  container.innerHTML = `<div class="flex items-center justify-center h-full"><div class="text-gray-400">読み込み中...</div></div>`;
+  // まずキャッシュを使って即座に描画
+  categories = api.getCachedCategories();
+  const hasCache = categories.length > 0;
+  
+  if (hasCache) {
+    await updateHomeView(container, true);
+  } else {
+    container.innerHTML = `<div class="flex items-center justify-center h-full"><div class="text-gray-400">読み込み中...</div></div>`;
+  }
 
+  // 裏で最新データを取得し再描画
   try {
-    if (categories.length === 0) {
-      categories = await api.getCategories();
-    }
-    
-    await updateHomeView(container);
+    categories = await api.getCategories();
+    await updateHomeView(container, false);
   } catch (error) {
     console.error(error);
-    container.innerHTML = `<div class="p-4 text-red-500 text-center mt-10">データの取得に失敗しました。設定（APIキー等）をご確認ください。</div>`;
+    if (!hasCache) {
+      container.innerHTML = `<div class="p-4 text-red-500 text-center mt-10">データの取得に失敗しました。設定（APIキー等）をご確認ください。</div>`;
+    }
   }
 }
 
-async function updateHomeView(container: HTMLElement) {
+async function updateHomeView(container: HTMLElement, useCache: boolean = false) {
   // 月初と月末の日付をYYYY-MM-DDで求める
   const startDate = new Date(currentYear, currentMonth, 1);
   const endDate = new Date(currentYear, currentMonth + 1, 0);
@@ -34,7 +41,7 @@ async function updateHomeView(container: HTMLElement) {
   const startStr = formatDate(startDate);
   const endStr = formatDate(endDate);
 
-  const txs = await api.getTransactions(startStr, endStr);
+  const txs = useCache ? api.getCachedTransactions(startStr, endStr) : await api.getTransactions(startStr, endStr);
 
   // 日別集計と月間サマリー
   const summaryByDate: Record<string, { income: number; expense: number }> = {};

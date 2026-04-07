@@ -2,21 +2,39 @@ import { api } from '../api';
 // import type { Category } from '../types';
 
 export async function renderSettings(container: HTMLElement) {
-  container.innerHTML = `<div class="flex items-center justify-center h-full"><div class="text-gray-400">読み込み中...</div></div>`;
-
+  // まずキャッシュを使って即座に描画
   try {
-    await updateSettingsView(container);
+    const cachedCategories = api.getCachedCategories();
+    if (cachedCategories.length === 0 && !localStorage.getItem('cache_categories')) {
+      throw new Error('No cache'); // まだ一度もAPI叩いてない場合はLoadingを出す
+    }
+    await updateSettingsView(container, true);
+  } catch (e) {
+    container.innerHTML = `<div class="flex items-center justify-center h-full"><div class="text-gray-400">読み込み中...</div></div>`;
+  }
+
+  // 裏で最新データを取得し再描画
+  try {
+    await updateSettingsView(container, false);
   } catch (error) {
     console.error(error);
-    container.innerHTML = `<div class="p-4 text-red-500 text-center mt-10">データの取得に失敗しました。</div>`;
+    if (!localStorage.getItem('cache_categories')) {
+      container.innerHTML = `<div class="p-4 text-red-500 text-center mt-10">データの取得に失敗しました。</div>`;
+    }
   }
 }
 
-async function updateSettingsView(container: HTMLElement) {
-  const [categories, recurrings] = await Promise.all([
-    api.getCategories(),
-    api.getRecurringTasks()
-  ]);
+async function updateSettingsView(container: HTMLElement, useCache: boolean = false) {
+  let categories: any[], recurrings: any[];
+  if (useCache) {
+    categories = api.getCachedCategories();
+    recurrings = api.getCachedRecurringTasks();
+  } else {
+    [categories, recurrings] = await Promise.all([
+      api.getCategories(),
+      api.getRecurringTasks()
+    ]);
+  }
 
   const expenseCategories = categories.filter(c => c.type === 'expense');
   const incomeCategories = categories.filter(c => c.type === 'income');

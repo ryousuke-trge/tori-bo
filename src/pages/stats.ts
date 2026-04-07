@@ -7,17 +7,23 @@ let currentMonth = new Date().getMonth(); // 0-11
 let searchQuery = '';
 
 export async function renderStats(container: HTMLElement) {
-  container.innerHTML = `<div class="flex items-center justify-center h-full"><div class="text-gray-400">読み込み中...</div></div>`;
-
+  // キャッシュから一瞬で描画を試みる
   try {
-    await updateStatsView(container);
+    await updateStatsView(container, true);
+  } catch (e) {
+    container.innerHTML = `<div class="flex items-center justify-center h-full"><div class="text-gray-400">読み込み中...</div></div>`;
+  }
+
+  // 裏で最新データを取得し再描画
+  try {
+    await updateStatsView(container, false);
   } catch (error) {
     console.error(error);
     container.innerHTML = `<div class="p-4 text-red-500 text-center mt-10">データの取得に失敗しました。</div>`;
   }
 }
 
-async function updateStatsView(container: HTMLElement) {
+async function updateStatsView(container: HTMLElement, useCache: boolean = false) {
   // 今月
   const startDate = new Date(currentYear, currentMonth, 1);
   const endDate = new Date(currentYear, currentMonth + 1, 0);
@@ -33,10 +39,20 @@ async function updateStatsView(container: HTMLElement) {
   const prevEndDate = new Date(prevYear, prevMonth + 1, 0);
 
   // データ取得
-  const [currentTxs, prevTxs] = await Promise.all([
-    api.getTransactions(formatDate(startDate), formatDate(endDate)),
-    api.getTransactions(formatDate(prevStartDate), formatDate(prevEndDate))
-  ]);
+  let currentTxs, prevTxs;
+  if (useCache) {
+    currentTxs = api.getCachedTransactions(formatDate(startDate), formatDate(endDate));
+    prevTxs = api.getCachedTransactions(formatDate(prevStartDate), formatDate(prevEndDate));
+    // もしキャッシュが全く無さそうならエラーを投げて「読み込み中...」を出させる
+    if (currentTxs.length === 0 && prevTxs.length === 0 && !localStorage.getItem('cache_transactions')) {
+      throw new Error('No cache');
+    }
+  } else {
+    [currentTxs, prevTxs] = await Promise.all([
+      api.getTransactions(formatDate(startDate), formatDate(endDate)),
+      api.getTransactions(formatDate(prevStartDate), formatDate(prevEndDate))
+    ]);
+  }
 
   // 集計関数
   const aggregate = (txs: TransactionWithCategory[]) => {
