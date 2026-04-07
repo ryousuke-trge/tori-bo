@@ -5,7 +5,7 @@ import { renderStats } from './pages/stats';
 import { renderSettings } from './pages/settings';
 import { renderBottomNav } from './components/BottomNav';
 
-// DOM Elements
+// DOM要素
 const pageContent = document.getElementById('page-content');
 const bottomNav = document.getElementById('bottom-nav');
 

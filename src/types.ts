@@ -3,6 +3,7 @@ export interface Category {
   name: string;
   icon: string; // 絵文字
   type: 'income' | 'expense';
+  sort_order?: number;
   created_at?: string;
 }
 

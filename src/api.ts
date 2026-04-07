@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import type { Category, Transaction, RecurringTask, TransactionWithCategory, RecurringTaskWithCategory } from './types';
 
 export const api = {
-  // --- Cache Helpers ---
+  // --- キャッシュヘルパー ---
   getCachedCategories(): Category[] {
     try { return JSON.parse(localStorage.getItem('cache_categories') || '[]'); } catch { return []; }
   },
@@ -16,9 +16,12 @@ export const api = {
     try { return JSON.parse(localStorage.getItem('cache_recurring') || '[]'); } catch { return []; }
   },
 
-  // --- Categories ---
+  // --- カテゴリ ---
   async getCategories() {
-    const { data, error } = await supabase.from('categories').select('*');
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('sort_order', { ascending: true, nullsFirst: false });
     if (error) throw error;
     localStorage.setItem('cache_categories', JSON.stringify(data));
     return data as Category[];
@@ -28,12 +31,25 @@ export const api = {
     if (error) throw error;
     return data as Category;
   },
+  async updateCategory(id: string, updates: Partial<Omit<Category, 'id' | 'created_at'>>) {
+    const { data, error } = await supabase.from('categories').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    return data as Category;
+  },
+  async updateCategoryOrders(updates: { id: string; sort_order: number }[]) {
+    // 複数件のupdateを実行
+    const promises = updates.map(u => supabase.from('categories').update({ sort_order: u.sort_order }).eq('id', u.id));
+    const results = await Promise.all(promises);
+    for (const res of results) {
+      if (res.error) throw res.error;
+    }
+  },
   async deleteCategory(id: string) {
     const { error } = await supabase.from('categories').delete().eq('id', id);
     if (error) throw error;
   },
 
-  // --- Transactions ---
+  // --- 取引 ---
   async getTransactions(startDate: string, endDate: string) {
     const { data, error } = await supabase
       .from('transactions')
@@ -43,9 +59,9 @@ export const api = {
       .order('date', { ascending: true });
     if (error) throw error;
 
-    // Cache the fetched transactions (merge with existing or simply replace for this range)
-    // Note: For simplicity in a lightweight app, we can just store the latest fetched block
-    // or merge it. Let's merge it so the cache grows with data.
+    // 取得した取引データをキャッシュに保存（既存データとマージ、またはこの範囲を置換）
+    // 注意: シンプルな軽量アプリなので、最新の取得ブロックを保存するかマージします。
+    // データが蓄積されるようにマージを実施します。
     try {
       const existing: TransactionWithCategory[] = JSON.parse(localStorage.getItem('cache_transactions') || '[]');
       const others = existing.filter(t => t.date < startDate || t.date > endDate);
@@ -67,7 +83,7 @@ export const api = {
     if (error) throw error;
   },
 
-  // --- Recurring Tasks ---
+  // --- 定期タスク ---
   async getRecurringTasks() {
     const { data, error } = await supabase.from('recurring').select('*, categories(*)');
     if (error) throw error;

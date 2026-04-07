@@ -8,7 +8,7 @@ interface DaySummary {
 export function renderCalendar(
   container: HTMLElement,
   year: number,
-  month: number, // 0-indexed (0 = Jan)
+  month: number, // 0から始まる月インデックス (0 = 1月)
   summaryByDate: Record<string, DaySummary>,
   selectedDateStr: string | null = null
 ) {

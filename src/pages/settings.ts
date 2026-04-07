@@ -1,19 +1,82 @@
 import { api } from '../api';
-// import type { Category } from '../types';
+import Sortable from 'sortablejs';
+
+const COMMON_EMOJIS = ['💰', '🍔', '🚃', '🏥', '🏠', '💡', '📱', '🎮', '👕', '✂️', '🎁', '🎓', '🏛️', '🍻', '💳', '📦'];
+
+// グローバルな絵文字ピッカーの初期化
+let pickerEl: HTMLElement | null = null;
+let activeEmojiInput: HTMLInputElement | null = null;
+
+function initEmojiPicker() {
+  if (!document.getElementById('global-emoji-picker')) {
+    pickerEl = document.createElement('div');
+    pickerEl.id = 'global-emoji-picker';
+    pickerEl.className = 'fixed bg-white border border-gray-200 rounded-lg shadow-xl p-2 z-[60] flex flex-wrap w-[220px] gap-1 hidden transition-opacity opacity-0';
+    pickerEl.innerHTML = COMMON_EMOJIS.map(e => `<button type="button" class="btn-emoji p-1 text-xl hover:bg-gray-100 rounded">${e}</button>`).join('');
+    document.body.appendChild(pickerEl);
+
+    pickerEl.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('btn-emoji') && activeEmojiInput) {
+        activeEmojiInput.value = target.innerText;
+        closeEmojiPicker();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!activeEmojiInput || !pickerEl) return;
+      const isInsidePicker = pickerEl.contains(e.target as Node);
+      const isInsideInput = activeEmojiInput.contains(e.target as Node);
+      if (!isInsidePicker && !isInsideInput) {
+        closeEmojiPicker();
+      }
+    });
+  } else {
+    pickerEl = document.getElementById('global-emoji-picker');
+  }
+}
+
+function showEmojiPicker(input: HTMLInputElement) {
+  activeEmojiInput = input;
+  if (!pickerEl) return;
+  pickerEl.classList.remove('hidden');
+  
+  const rect = input.getBoundingClientRect();
+  
+  // 画面外にはみ出さないよう調整
+  let top = rect.bottom + window.scrollY + 4;
+  let left = rect.left + window.scrollX;
+  
+  if (left + 220 > window.innerWidth) {
+    left = window.innerWidth - 230;
+  }
+  
+  pickerEl.style.top = `${top}px`;
+  pickerEl.style.left = `${Math.max(10, left)}px`;
+  
+  requestAnimationFrame(() => pickerEl!.classList.add('opacity-100'));
+}
+
+function closeEmojiPicker() {
+  if (!pickerEl) return;
+  pickerEl.classList.remove('opacity-100');
+  setTimeout(() => pickerEl?.classList.add('hidden'), 150);
+  activeEmojiInput = null;
+}
 
 export async function renderSettings(container: HTMLElement) {
-  // まずキャッシュを使って即座に描画
+  initEmojiPicker();
+
   try {
     const cachedCategories = api.getCachedCategories();
     if (cachedCategories.length === 0 && !localStorage.getItem('cache_categories')) {
-      throw new Error('No cache'); // まだ一度もAPI叩いてない場合はLoadingを出す
+      throw new Error('No cache'); 
     }
     await updateSettingsView(container, true);
   } catch (e) {
     container.innerHTML = `<div class="flex items-center justify-center h-full"><div class="text-gray-400">読み込み中...</div></div>`;
   }
 
-  // 裏で最新データを取得し再描画
   try {
     await updateSettingsView(container, false);
   } catch (error) {
@@ -91,7 +154,7 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
 
       <!-- カテゴリ設定 -->
       <section class="mb-8">
-        <h2 class="text-lg font-bold text-gray-700 mb-3">カテゴリ</h2>
+        <h2 class="text-lg font-bold text-gray-700 mb-3">カテゴリ管理</h2>
         
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 p-4">
           <form id="form-add-category" class="flex items-center gap-2">
@@ -99,23 +162,84 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
               <option value="expense">支出</option>
               <option value="income">収入</option>
             </select>
-            <input type="text" name="icon" placeholder="絵文字" required maxLength="2" class="w-16 text-center bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="text" name="icon" placeholder="絵文字" required maxLength="2" class="emoji-input w-16 text-center bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <input type="text" name="name" placeholder="新しいカテゴリ" required class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg transition-colors text-sm">追加</button>
           </form>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          ${categories.map(c => `
-            <div class="bg-white border border-gray-100 p-2 rounded-xl flex items-center justify-between shadow-sm">
-              <div class="flex items-center gap-2 overflow-hidden">
-                <span class="text-lg">${c.icon}</span>
-                <span class="text-sm font-medium text-gray-700 truncate">${c.name}</span>
-                <span class="text-[10px] text-gray-400 border border-gray-200 rounded px-1">${c.type === 'income' ? '収' : '支'}</span>
+        <h3 class="text-sm font-bold text-gray-500 mb-2">支出カテゴリ</h3>
+        <div id="expense-categories-list" class="flex flex-col gap-2 mb-6">
+          ${expenseCategories.map(c => `
+            <div class="category-item bg-white border border-gray-100 p-2 rounded-xl flex flex-col shadow-sm" data-id="${c.id}">
+              <!-- 表示モード -->
+              <div class="category-view flex items-center justify-between">
+                <div class="flex items-center gap-2 overflow-hidden">
+                  <div class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 mr-1 p-1" title="並べ替え">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" /></svg>
+                  </div>
+                  <span class="text-lg w-6 text-center">${c.icon}</span>
+                  <span class="text-sm font-medium text-gray-700 truncate">${c.name}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button class="btn-edit-category text-gray-400 hover:text-blue-500 p-1 flex-shrink-0" data-id="${c.id}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                  <button class="btn-delete-category text-gray-400 hover:text-red-500 p-1 flex-shrink-0" data-id="${c.id}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
               </div>
-              <button class="btn-delete-category text-gray-400 hover:text-red-500 p-1 flex-shrink-0" data-id="${c.id}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              
+              <!-- 編集モード -->
+              <form class="category-edit-form hidden flex items-center gap-2 mt-2 pt-2 border-t border-gray-50" data-id="${c.id}">
+                <select name="type" required class="bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                  <option value="expense" ${c.type === 'expense' ? 'selected' : ''}>支出</option>
+                  <option value="income" ${c.type === 'income' ? 'selected' : ''}>収入</option>
+                </select>
+                <input type="text" name="icon" value="${c.icon}" required maxLength="2" class="emoji-input w-10 text-center bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" name="name" value="${c.name}" required class="flex-1 bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-1 rounded transition-colors text-xs">保存</button>
+                <button type="button" class="btn-cancel-edit bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-2 py-1 rounded transition-colors text-xs">取消</button>
+              </form>
+            </div>
+          `).join('')}
+        </div>
+
+        <h3 class="text-sm font-bold text-gray-500 mb-2">収入カテゴリ</h3>
+        <div id="income-categories-list" class="flex flex-col gap-2">
+          ${incomeCategories.map(c => `
+            <div class="category-item bg-white border border-gray-100 p-2 rounded-xl flex flex-col shadow-sm" data-id="${c.id}">
+              <!-- 表示モード -->
+              <div class="category-view flex items-center justify-between">
+                <div class="flex items-center gap-2 overflow-hidden">
+                  <div class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 mr-1 p-1" title="並べ替え">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" /></svg>
+                  </div>
+                  <span class="text-lg w-6 text-center">${c.icon}</span>
+                  <span class="text-sm font-medium text-gray-700 truncate">${c.name}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button class="btn-edit-category text-gray-400 hover:text-blue-500 p-1 flex-shrink-0" data-id="${c.id}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                  <button class="btn-delete-category text-gray-400 hover:text-red-500 p-1 flex-shrink-0" data-id="${c.id}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- 編集モード -->
+              <form class="category-edit-form hidden flex items-center gap-2 mt-2 pt-2 border-t border-gray-50" data-id="${c.id}">
+                <select name="type" required class="bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                  <option value="expense" ${c.type === 'expense' ? 'selected' : ''}>支出</option>
+                  <option value="income" ${c.type === 'income' ? 'selected' : ''}>収入</option>
+                </select>
+                <input type="text" name="icon" value="${c.icon}" required maxLength="2" class="emoji-input w-10 text-center bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" name="name" value="${c.name}" required class="flex-1 bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-1 rounded transition-colors text-xs">保存</button>
+                <button type="button" class="btn-cancel-edit bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-2 py-1 rounded transition-colors text-xs">取消</button>
+              </form>
             </div>
           `).join('')}
         </div>
@@ -125,7 +249,14 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
 
   container.innerHTML = html;
 
-  // イベントリスナー
+  // 絵文字入力フィールドへのイベントリスナー（新規追加フォームと編集フォーム両方）
+  const emojiInputs = container.querySelectorAll('.emoji-input') as NodeListOf<HTMLInputElement>;
+  emojiInputs.forEach(input => {
+    input.addEventListener('focus', () => showEmojiPicker(input));
+    // 直接入力を許可するため、keydown等で閉じない
+  });
+
+  // 繰り返しフォーム
   const recurringForm = document.getElementById('form-add-recurring') as HTMLFormElement;
   recurringForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -139,6 +270,7 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
     updateSettingsView(container);
   });
 
+  // カテゴリ新規追加
   const categoryForm = document.getElementById('form-add-category') as HTMLFormElement;
   categoryForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -148,9 +280,11 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
       icon: data.get('icon') as string,
       type: data.get('type') as 'income' | 'expense'
     });
+    closeEmojiPicker();
     updateSettingsView(container);
   });
 
+  // 繰り返し予定削除
   const delRecurringBtns = container.querySelectorAll('.btn-delete-recurring');
   delRecurringBtns.forEach(btn => {
     btn.addEventListener('click', async (e) => {
@@ -161,6 +295,7 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
     });
   });
 
+  // カテゴリ削除
   const delCatBtns = container.querySelectorAll('.btn-delete-category');
   delCatBtns.forEach(btn => {
     btn.addEventListener('click', async (e) => {
@@ -170,4 +305,93 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
       updateSettingsView(container);
     });
   });
+
+  // カテゴリ編集への切り替え
+  const editCatBtns = container.querySelectorAll('.btn-edit-category');
+  editCatBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = (e.currentTarget as HTMLButtonElement).dataset.id!;
+      const itemEl = container.querySelector(`.category-item[data-id="${id}"]`)!;
+      const viewEl = itemEl.querySelector('.category-view')!;
+      const editEl = itemEl.querySelector('.category-edit-form')!;
+      
+      viewEl.classList.add('hidden');
+      editEl.classList.remove('hidden');
+    });
+  });
+
+  // カテゴリ編集のキャンセル
+  const cancelEditBtns = container.querySelectorAll('.btn-cancel-edit');
+  cancelEditBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const formEl = (e.currentTarget as HTMLButtonElement).closest('.category-edit-form') as HTMLFormElement;
+      const id = formEl.dataset.id!;
+      const itemEl = container.querySelector(`.category-item[data-id="${id}"]`)!;
+      const viewEl = itemEl.querySelector('.category-view')!;
+      
+      formEl.classList.add('hidden');
+      viewEl.classList.remove('hidden');
+      closeEmojiPicker();
+    });
+  });
+
+  // カテゴリの更新保存
+  const editCatForms = container.querySelectorAll('.category-edit-form');
+  editCatForms.forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formEl = e.currentTarget as HTMLFormElement;
+      const id = formEl.dataset.id!;
+      const data = new FormData(formEl);
+      
+      const newType = data.get('type') as 'income' | 'expense';
+      const newIcon = data.get('icon') as string;
+      const newName = data.get('name') as string;
+      
+      await api.updateCategory(id, {
+        type: newType,
+        icon: newIcon,
+        name: newName
+      });
+      
+      closeEmojiPicker();
+      updateSettingsView(container);
+    });
+  });
+
+  // SortableJSの初期化
+  const initSortable = (selector: string) => {
+    const el = container.querySelector(selector) as HTMLElement;
+    if (el) {
+      Sortable.create(el, {
+        handle: '.drag-handle',
+        animation: 150,
+        onEnd: async (evt) => {
+          const listEl = evt.to;
+          const items = Array.from(listEl.querySelectorAll('.category-item'));
+          const updates = items.map((item, index) => ({
+            id: (item as HTMLElement).dataset.id!,
+            sort_order: index,
+          }));
+          try {
+            await api.updateCategoryOrders(updates);
+            // キャッシュを更新してソート済みの状態を維持
+            const cache = api.getCachedCategories();
+            updates.forEach(u => {
+              const c = cache.find(cat => cat.id === u.id);
+              if (c) c.sort_order = u.sort_order;
+            });
+            cache.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+            localStorage.setItem('cache_categories', JSON.stringify(cache));
+          } catch(e) {
+            console.error('Failed to update sort order', e);
+            alert('並び順の保存に失敗しました');
+          }
+        }
+      });
+    }
+  };
+
+  initSortable('#expense-categories-list');
+  initSortable('#income-categories-list');
 }
