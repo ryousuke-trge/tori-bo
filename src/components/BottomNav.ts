@@ -4,7 +4,7 @@ export function renderBottomNav(container: HTMLElement, currentHash: string) {
   const isSettings = currentHash === '#/settings';
 
   const baseClass = "flex flex-col items-center justify-center w-full h-full text-sm font-medium transition-colors";
-  const activeClass = "text-blue-600";
+  const activeClass = "text-yellow-400";
   const inactiveClass = "text-gray-400 hover:text-gray-600";
 
   container.innerHTML = `

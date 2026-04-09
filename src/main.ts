@@ -4,6 +4,8 @@ import { renderHome } from './pages/home';
 import { renderStats } from './pages/stats';
 import { renderSettings } from './pages/settings';
 import { renderBottomNav } from './components/BottomNav';
+import '@fontsource/yomogi';
+import '@fontsource/zen-kaku-gothic-new';
 
 // DOM elements
 const pageContent = document.getElementById('page-content');

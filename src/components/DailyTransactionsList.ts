@@ -20,7 +20,7 @@ export function renderDailyTransactionsList(
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 border-b border-gray-100 pb-2 gap-2">
         <h2 class="text-lg font-bold text-gray-800">${displayDate}</h2>
         <div class="text-sm font-medium flex flex-wrap gap-x-3 gap-y-1">
-          <span class="text-blue-500">収入: +${totalIncome.toLocaleString()}</span>
+          <span class="text-yellow-500">収入: +${totalIncome.toLocaleString()}</span>
           <span class="text-red-500">支出: -${totalExpense.toLocaleString()}</span>
           <span class="${isPlus ? 'text-gray-800' : 'text-red-500'} font-bold">収支: ${isPlus ? '+' : ''}${balance.toLocaleString()}</span>
         </div>
@@ -50,7 +50,7 @@ export function renderDailyTransactionsList(
             </div>
           </div>
           <div class="flex items-center gap-3 ml-2 flex-shrink-0">
-            <div class="font-bold text-right ${isIncome ? 'text-blue-500' : 'text-red-500'}">
+            <div class="font-bold text-right ${isIncome ? 'text-yellow-500' : 'text-red-500'}">
               ${isIncome ? '+' : '-'}${tx.amount.toLocaleString()}
             </div>
             <button class="dtl-delete-btn text-gray-400 hover:text-red-500 p-1" data-id="${tx.id}">

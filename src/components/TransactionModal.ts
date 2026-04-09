@@ -41,26 +41,26 @@ export function createTransactionModal(
             </label>
             <label class="flex-1 text-center cursor-pointer">
               <input type="radio" name="type" value="income" class="peer sr-only" ${initialOptions?.type === 'income' ? 'checked' : ''} />
-              <div class="py-2 rounded-md peer-checked:bg-white peer-checked:shadow text-sm font-medium text-gray-600 peer-checked:text-blue-500 transition-all">収入</div>
+              <div class="py-2 rounded-md peer-checked:bg-white peer-checked:shadow text-sm font-medium text-gray-600 peer-checked:text-yellow-500 transition-all">収入</div>
             </label>
           </div>
 
           <!-- Date -->
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">日付</label>
-            <input type="date" id="tx-date" name="date" required value="${initialOptions?.date || formatDate(new Date())}" class="w-full max-w-full min-w-0 appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 h-12 box-border" />
+            <input type="date" id="tx-date" name="date" required value="${initialOptions?.date || formatDate(new Date())}" class="w-full max-w-full min-w-0 appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 h-12 box-border" />
           </div>
 
           <!-- Amount -->
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">金額 (円)</label>
-            <input type="number" id="tx-amount" name="amount" required min="1" placeholder="0" value="${initialOptions?.amount || ''}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 text-lg font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 h-12" />
+            <input type="number" id="tx-amount" name="amount" required min="1" placeholder="0" value="${initialOptions?.amount || ''}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 text-lg font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 h-12" />
           </div>
 
           <!-- Category -->
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">カテゴリ</label>
-            <select id="tx-category" name="category_id" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none h-12 bg-no-repeat" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239CA3AF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-position: right 0.7rem top 50%; background-size: 0.65rem auto;">
+            <select id="tx-category" name="category_id" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none h-12 bg-no-repeat" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239CA3AF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-position: right 0.7rem top 50%; background-size: 0.65rem auto;">
               <optgroup label="支出" id="optgroup-expense" style="${initialOptions?.type === 'income' ? 'display: none;' : ''}">
                 ${expenseCategories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}
               </optgroup>
@@ -73,10 +73,10 @@ export function createTransactionModal(
           <!-- Memo -->
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">メモ</label>
-            <input type="text" id="tx-memo" name="memo" placeholder="任意" value="${initialOptions?.memo || ''}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 h-12" />
+            <input type="text" id="tx-memo" name="memo" placeholder="任意" value="${initialOptions?.memo || ''}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 h-12" />
           </div>
 
-          <button type="submit" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg">
+          <button type="submit" class="mt-2 w-full bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg">
             保存する
           </button>
         </form>

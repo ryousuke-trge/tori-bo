@@ -18,6 +18,8 @@
     "vite": "^8.0.4"
   },
   "dependencies": {
+    "@fontsource/yomogi": "^5.2.7",
+    "@fontsource/zen-kaku-gothic-new": "^5.2.7",
     "@supabase/supabase-js": "^2.101.1",
     "sortablejs": "^1.15.7",
     "uuid": "^13.0.0"

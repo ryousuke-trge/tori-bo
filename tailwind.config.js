@@ -8,6 +8,8 @@ export default {
     extend: {
       fontFamily: {
         sans: [
+          '"Yomogi"',
+          '"Zen Kaku Gothic New"',
           '"SF Pro Text"', 
           '"SF Pro Display"', 
           '"SF Pro"', 

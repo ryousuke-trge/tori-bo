@@ -110,7 +110,7 @@ async function updateStatsView(container: HTMLElement, useCache: boolean = false
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </div>
-          <input type="text" id="search-input" value="${searchQuery}" placeholder="カテゴリ名で検索..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+          <input type="text" id="search-input" value="${searchQuery}" placeholder="カテゴリ名で検索..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all text-sm">
         </div>
       </div>
 
@@ -124,8 +124,8 @@ async function updateStatsView(container: HTMLElement, useCache: boolean = false
         <div class="w-px h-10 bg-gray-200 mx-2"></div>
         <div class="flex-1">
           <div class="text-xs text-gray-400 mb-1">今月収入</div>
-          <div class="text-lg font-bold text-blue-500">¥${curr.income.toLocaleString()}</div>
-          <div class="text-[10px] ${diffIncome < 0 ? 'text-red-500' : 'text-blue-500'} font-medium">先月比 ${formatDiff(diffIncome)}</div>
+          <div class="text-lg font-bold text-yellow-500">¥${curr.income.toLocaleString()}</div>
+          <div class="text-[10px] ${diffIncome < 0 ? 'text-red-500' : 'text-yellow-500'} font-medium">先月比 ${formatDiff(diffIncome)}</div>
         </div>
       </div>
 
