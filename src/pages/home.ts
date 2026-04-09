@@ -103,8 +103,8 @@ async function updateHomeView(container: HTMLElement, useCache: boolean = false)
       
       <!-- Floating Action Button (FAB) -->
       <div class="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] w-full max-w-md left-1/2 -translate-x-1/2 pointer-events-none flex justify-end px-4 sm:px-6 z-10">
-        <button id="btn-add-tx" class="pointer-events-auto w-20 h-20 bg-white rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transform transition-all flex items-center justify-center focus:outline-none shrink-0 overflow-hidden group">
-          <img src="/shimaenaga.png" alt="追加" class="w-16 h-16 object-contain scale-[1.6] group-hover:scale-[1.7] transition-transform duration-300 origin-center relative z-0" />
+        <button id="btn-add-tx" class="pointer-events-auto w-20 h-20 bg-white rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transform transition-all focus:outline-none shrink-0 overflow-hidden group relative">
+          <img src="/shimaenaga.png" alt="追加" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100px] h-[100px] max-w-none object-contain group-hover:scale-110 transition-transform duration-300" />
         </button>
       </div>
     </div>
