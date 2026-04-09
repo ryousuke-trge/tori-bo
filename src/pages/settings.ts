@@ -128,12 +128,12 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 p-4">
           <form id="form-add-recurring" class="flex flex-col gap-3">
             <div class="flex gap-2">
-               <input type="text" name="title" placeholder="タイトル (例: 家賃)" required class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-               <input type="number" name="amount" placeholder="金額" required min="1" class="w-24 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+               <input type="text" name="title" placeholder="タイトル (例: 家賃)" required class="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+               <input type="number" name="amount" placeholder="金額" required min="1" class="w-24 shrink-0 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500" />
             </div>
             <div class="flex gap-2">
-               <input type="date" name="start_date" required class="w-32 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-               <select name="frequency" required class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none">
+               <input type="date" name="start_date" required class="w-32 shrink-0 bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+               <select name="frequency" required class="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none">
                  <option value="" disabled selected>繰り返し頻度</option>
                  ${Object.entries(FREQUENCY_LABELS).map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}
                </select>
@@ -175,14 +175,14 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
         <h2 class="text-lg font-bold text-gray-700 mb-3">カテゴリ管理</h2>
         
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 p-4">
-          <form id="form-add-category" class="flex items-center gap-2">
-            <select name="type" required class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none">
+          <form id="form-add-category" class="flex items-center gap-1 sm:gap-2">
+            <select name="type" required class="bg-gray-50 border border-gray-200 rounded-lg px-1 sm:px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none shrink-0">
               <option value="expense">支出</option>
               <option value="income">収入</option>
             </select>
-            <input type="text" name="icon" placeholder="絵文字" required maxLength="2" class="emoji-input w-16 text-center bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-            <input type="text" name="name" placeholder="新しいカテゴリ" required class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-            <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold px-4 py-2 rounded-lg transition-colors text-sm">追加</button>
+            <input type="text" name="icon" placeholder="絵文字" required maxLength="2" class="emoji-input w-12 sm:w-16 text-center bg-gray-50 border border-gray-200 rounded-lg px-1 sm:px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 shrink-0" />
+            <input type="text" name="name" placeholder="新カテゴリ" required class="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-lg px-2 sm:px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+            <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm shrink-0 whitespace-nowrap">追加</button>
           </form>
         </div>
 
@@ -210,15 +210,15 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
               </div>
               
               <!-- Edit mode -->
-              <form class="category-edit-form hidden flex items-center gap-2 mt-2 pt-2 border-t border-gray-50" data-id="${c.id}">
-                <select name="type" required class="bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none">
+              <form class="category-edit-form hidden flex items-center gap-1 sm:gap-2 mt-2 pt-2 border-t border-gray-50" data-id="${c.id}">
+                <select name="type" required class="bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none shrink-0">
                   <option value="expense" ${c.type === 'expense' ? 'selected' : ''}>支出</option>
                   <option value="income" ${c.type === 'income' ? 'selected' : ''}>収入</option>
                 </select>
-                <input type="text" name="icon" value="${c.icon}" required maxLength="2" class="emoji-input w-10 text-center bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-                <input type="text" name="name" value="${c.name}" required class="flex-1 bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-                <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold px-2 py-1 rounded transition-colors text-xs">保存</button>
-                <button type="button" class="btn-cancel-edit bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-2 py-1 rounded transition-colors text-xs">取消</button>
+                <input type="text" name="icon" value="${c.icon}" required maxLength="2" class="emoji-input w-8 sm:w-10 text-center bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500 shrink-0" />
+                <input type="text" name="name" value="${c.name}" required class="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+                <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold px-2 py-1 rounded transition-colors text-xs shrink-0 whitespace-nowrap">保存</button>
+                <button type="button" class="btn-cancel-edit bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-2 py-1 rounded transition-colors text-xs shrink-0 whitespace-nowrap">取消</button>
               </form>
             </div>
           `).join('')}
@@ -248,15 +248,15 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
               </div>
               
               <!-- Edit mode -->
-              <form class="category-edit-form hidden flex items-center gap-2 mt-2 pt-2 border-t border-gray-50" data-id="${c.id}">
-                <select name="type" required class="bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none">
+              <form class="category-edit-form hidden flex items-center gap-1 sm:gap-2 mt-2 pt-2 border-t border-gray-50" data-id="${c.id}">
+                <select name="type" required class="bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none shrink-0">
                   <option value="expense" ${c.type === 'expense' ? 'selected' : ''}>支出</option>
                   <option value="income" ${c.type === 'income' ? 'selected' : ''}>収入</option>
                 </select>
-                <input type="text" name="icon" value="${c.icon}" required maxLength="2" class="emoji-input w-10 text-center bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-                <input type="text" name="name" value="${c.name}" required class="flex-1 bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-                <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold px-2 py-1 rounded transition-colors text-xs">保存</button>
-                <button type="button" class="btn-cancel-edit bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-2 py-1 rounded transition-colors text-xs">取消</button>
+                <input type="text" name="icon" value="${c.icon}" required maxLength="2" class="emoji-input w-8 sm:w-10 text-center bg-gray-50 border border-gray-200 rounded-md px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500 shrink-0" />
+                <input type="text" name="name" value="${c.name}" required class="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+                <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold px-2 py-1 rounded transition-colors text-xs shrink-0 whitespace-nowrap">保存</button>
+                <button type="button" class="btn-cancel-edit bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-2 py-1 rounded transition-colors text-xs shrink-0 whitespace-nowrap">取消</button>
               </form>
             </div>
           `).join('')}
