@@ -134,7 +134,7 @@ export async function renderAssets(container: HTMLElement) {
       `;
 
       return `
-        <div data-edit-id="${id}" data-edit-type="${type}" data-edit-name="${subtitle}" data-edit-amount="${amount || 0}" data-edit-author="${authorName}" class="edit-asset-btn bg-white rounded-[20px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-between cursor-pointer active:scale-95 transition-all outline-none select-none">
+        <div data-edit-id="${id}" data-edit-type="${type}" data-edit-name="${subtitle}" data-edit-amount="${amount || 0}" data-edit-author="${authorName}" class="edit-asset-btn bg-white rounded-[20px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-between cursor-pointer active:scale-95 transition-all outline-none select-none hover:bg-gray-50">
           <div class="flex items-center gap-4">
             ${avatarHtml}
             <div>
@@ -142,7 +142,12 @@ export async function renderAssets(container: HTMLElement) {
               <div class="text-gray-400 text-[11px] mt-0.5">${subtitle}</div>
             </div>
           </div>
-          <div class="${amountClass} font-medium tracking-wide">¥ ${(amount || 0).toLocaleString()}</div>
+          <div class="flex items-center gap-3">
+            <div class="${amountClass} font-medium tracking-wide">¥ ${(amount || 0).toLocaleString()}</div>
+            <div class="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-400 rounded-full hover:bg-gray-200 transition-colors" title="編集">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            </div>
+          </div>
         </div>
       `;
     };
