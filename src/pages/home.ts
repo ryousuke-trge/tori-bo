@@ -152,7 +152,8 @@ async function updateHomeView(container: HTMLElement, useCache: boolean = false)
             date: data.date,
             amount: data.amount,
             category_id: data.category_id,
-            memo: data.memo
+            memo: data.memo,
+            asset_type: data.asset_type as "bank" | "cashless" | "cash" | undefined
           });
           await updateHomeView(container);
         }, {
@@ -161,7 +162,8 @@ async function updateHomeView(container: HTMLElement, useCache: boolean = false)
           category_id: tx.category_id,
           memo: tx.memo,
           type: tx.categories?.type,
-          isEdit: true
+          isEdit: true,
+          asset_type: tx.asset_type as "bank" | "cashless" | "cash" | undefined
         });
       }
     );
@@ -193,7 +195,8 @@ async function updateHomeView(container: HTMLElement, useCache: boolean = false)
         date: data.date,
         amount: data.amount,
         category_id: data.category_id,
-        memo: data.memo
+        memo: data.memo,
+        asset_type: data.asset_type as "bank" | "cashless" | "cash" | undefined
       });
       // Re-render after successful save
       await updateHomeView(container);

@@ -14,6 +14,7 @@ export interface Transaction {
   category_id: string;
   memo: string;
   author_name?: string;
+  asset_type?: 'bank' | 'cashless' | 'cash';
   created_at?: string;
 }
 
@@ -41,6 +42,7 @@ export interface AssetEntry {
   bank: number;
   cashless: number;
   cash: number;
+  author_name?: string;
   updated_at?: string;
 }
 

@@ -3,7 +3,7 @@ import { formatDate } from '../utils/date';
 
 export function createTransactionModal(
   categories: Category[],
-  onSubmit: (data: { date: string; amount: number; category_id: string; memo: string }) => Promise<void>,
+  onSubmit: (data: { date: string; amount: number; category_id: string; memo: string; asset_type?: string }) => Promise<void>,
   initialOptions?: {
     date?: string;
     amount?: number;
@@ -11,6 +11,7 @@ export function createTransactionModal(
     memo?: string;
     type?: 'income' | 'expense';
     isEdit?: boolean;
+    asset_type?: 'bank' | 'cashless' | 'cash';
   }
 ) {
   // Remove existing modal if any
@@ -49,6 +50,25 @@ export function createTransactionModal(
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">日付</label>
             <input type="date" id="tx-date" name="date" required value="${initialOptions?.date || formatDate(new Date())}" class="w-full max-w-full min-w-0 appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 h-12 box-border" />
+          </div>
+
+          <!-- Asset -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">対象の資産</label>
+            <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
+              <label class="flex-1 text-center cursor-pointer">
+                <input type="radio" name="asset_type" value="cash" class="peer sr-only" ${initialOptions?.asset_type === 'cash' || !initialOptions?.asset_type ? 'checked' : ''} />
+                <div class="py-2 rounded-md peer-checked:bg-white peer-checked:shadow text-sm font-medium text-gray-600 peer-checked:text-blue-600 transition-all">現金</div>
+              </label>
+              <label class="flex-1 text-center cursor-pointer">
+                <input type="radio" name="asset_type" value="bank" class="peer sr-only" ${initialOptions?.asset_type === 'bank' ? 'checked' : ''} />
+                <div class="py-2 rounded-md peer-checked:bg-white peer-checked:shadow text-sm font-medium text-gray-600 peer-checked:text-blue-600 transition-all">口座</div>
+              </label>
+              <label class="flex-1 text-center cursor-pointer">
+                <input type="radio" name="asset_type" value="cashless" class="peer sr-only" ${initialOptions?.asset_type === 'cashless' ? 'checked' : ''} />
+                <div class="py-2 rounded-md peer-checked:bg-white peer-checked:shadow text-sm font-medium text-gray-600 peer-checked:text-blue-600 transition-all">電子/カード</div>
+              </label>
+            </div>
           </div>
 
           <!-- Amount -->
@@ -150,13 +170,14 @@ export function createTransactionModal(
     const amountStr = data.get('amount') as string;
     const category_id = data.get('category_id') as string;
     const memo = (data.get('memo') as string) || '';
+    const asset_type = data.get('asset_type') as string;
 
     const amount = Number(amountStr);
     if (!date || !amount || !category_id) return;
 
     try {
       // Set submit button to loading state, etc.
-      await onSubmit({ date, amount, category_id, memo });
+      await onSubmit({ date, amount, category_id, memo, asset_type });
       closeModal();
     } catch (e) {
       console.error(e);
