@@ -124,8 +124,8 @@ async function updateStatsView(container: HTMLElement, useCache: boolean = false
         <div class="w-px h-10 bg-gray-200 mx-2"></div>
         <div class="flex-1">
           <div class="text-xs text-gray-400 mb-1">今月収入</div>
-          <div class="text-lg font-bold text-yellow-500">¥${curr.income.toLocaleString()}</div>
-          <div class="text-[10px] ${diffIncome < 0 ? 'text-red-500' : 'text-yellow-500'} font-medium">先月比 ${formatDiff(diffIncome)}</div>
+          <div class="text-lg font-bold text-green-600">¥${curr.income.toLocaleString()}</div>
+          <div class="text-[10px] ${diffIncome < 0 ? 'text-red-500' : 'text-green-600'} font-medium">先月比 ${formatDiff(diffIncome)}</div>
         </div>
       </div>
 

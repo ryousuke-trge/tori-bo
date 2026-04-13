@@ -44,7 +44,7 @@ export function renderCalendar(
       <div class="${bgClass} min-h-[50px] p-1 flex flex-col justify-start hover:bg-gray-100 transition-colors cursor-pointer relative" data-date="${dateStr}">
         <span class="text-xs font-semibold ${isCurrentMonth && !isSelected ? 'text-gray-700' : ''} ${isSelected ? 'text-yellow-500' : ''} ${!isCurrentMonth && !isSelected ? 'text-gray-400' : ''}">${dateObj.getDate()}</span>
         <div class="mt-1 flex flex-col gap-0.5">
-          ${summary.income > 0 ? `<div class="text-[10px] text-yellow-500 truncate text-right">+${summary.income.toLocaleString()}</div>` : '<div class="h-[15px]"></div>'}
+          ${summary.income > 0 ? `<div class="text-[10px] text-green-600 truncate text-right">+${summary.income.toLocaleString()}</div>` : '<div class="h-[15px]"></div>'}
           ${summary.expense > 0 ? `<div class="text-[10px] text-red-500 truncate text-right">-${summary.expense.toLocaleString()}</div>` : '<div class="h-[15px]"></div>'}
         </div>
       </div>

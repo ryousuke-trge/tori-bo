@@ -41,7 +41,7 @@ export function createTransactionModal(
             </label>
             <label class="flex-1 text-center cursor-pointer">
               <input type="radio" name="type" value="income" class="peer sr-only" ${initialOptions?.type === 'income' ? 'checked' : ''} />
-              <div class="py-2 rounded-md peer-checked:bg-white peer-checked:shadow text-sm font-medium text-gray-600 peer-checked:text-yellow-500 transition-all">収入</div>
+              <div class="py-2 rounded-md peer-checked:bg-white peer-checked:shadow text-sm font-medium text-gray-600 peer-checked:text-green-600 transition-all">収入</div>
             </label>
           </div>
 

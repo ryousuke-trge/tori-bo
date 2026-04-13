@@ -81,7 +81,7 @@ async function updateHomeView(container: HTMLElement, useCache: boolean = false)
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-2 flex justify-between items-center">
         <div class="flex-1 text-center">
           <div class="text-xs text-gray-400 font-medium mb-1">収入</div>
-          <div class="text-yellow-500 font-semibold truncate">+${totalIncome.toLocaleString()}</div>
+          <div class="text-green-600 font-semibold truncate">+${totalIncome.toLocaleString()}</div>
         </div>
         <div class="w-px h-8 bg-gray-200 mx-2"></div>
         <div class="flex-1 text-center">
