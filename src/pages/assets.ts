@@ -93,9 +93,9 @@ export async function renderAssets(container: HTMLElement) {
             </div>
 
             <div class="space-y-3">
-              ${renderAssetCard(asset.id || '', 'bank', '口座', '🏦', asset.bank, asset.author_name, displayName)}
-              ${renderAssetCard(asset.id || '', 'cashless', 'クレジットカード', '💳', asset.cashless, asset.author_name, displayName)}
-              ${renderAssetCard(asset.id || '', 'cash', '現金', '💴', asset.cash, asset.author_name, displayName)}
+              ${renderAssetCard(asset.id || '', 'bank', '口座', '🏦', asset.bank || 0, asset.author_name || '', displayName)}
+              ${renderAssetCard(asset.id || '', 'cashless', 'クレジットカード', '💳', asset.cashless || 0, asset.author_name || '', displayName)}
+              ${renderAssetCard(asset.id || '', 'cash', '現金', '💴', asset.cash || 0, asset.author_name || '', displayName)}
             </div>
           </div>
         `;
