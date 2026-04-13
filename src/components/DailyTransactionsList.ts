@@ -46,7 +46,8 @@ export function renderDailyTransactionsList(
             </div>
             <div class="truncate">
               <div class="font-bold text-gray-800 text-sm">${tx.categories?.name || '不明なカテゴリ'}</div>
-              ${tx.memo ? `<div class="text-xs text-gray-500 truncate">${tx.memo}</div>` : ''}
+              ${tx.memo ? `<div class="text-xs text-gray-500 truncate mt-0.5">${tx.memo}</div>` : ''}
+              ${tx.author_email ? `<div class="text-[10px] text-gray-400 truncate mt-0.5"><span class="inline-block bg-gray-200 text-gray-500 px-1 py-0.5 rounded mr-1">登録者</span>${tx.author_email}</div>` : ''}
             </div>
           </div>
           <div class="flex items-center gap-3 ml-2 flex-shrink-0">

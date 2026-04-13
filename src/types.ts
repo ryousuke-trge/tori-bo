@@ -13,6 +13,7 @@ export interface Transaction {
   amount: number;
   category_id: string;
   memo: string;
+  author_email?: string;
   created_at?: string;
 }
 

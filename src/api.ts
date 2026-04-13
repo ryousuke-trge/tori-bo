@@ -73,8 +73,14 @@ export const api = {
 
     return data as TransactionWithCategory[];
   },
-  async addTransaction(tx: Omit<Transaction, 'id' | 'created_at'>) {
-    const { data, error } = await supabase.from('transactions').insert(tx).select().single();
+  async addTransaction(tx: Omit<Transaction, 'id' | 'created_at' | 'author_email'>) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const author_email = sessionData.session?.user?.email;
+
+    const { data, error } = await supabase.from('transactions').insert({
+      ...tx,
+      author_email
+    }).select().single();
     if (error) throw error;
     return data as Transaction;
   },
@@ -125,5 +131,13 @@ export const api = {
     const { data, error } = await supabase.from('assets').update(updates).eq('id', id).select().single();
     if (error) throw error;
     return data as AssetEntry;
+  },
+
+  // --- Auth utils ---
+  async logout() {
+    await supabase.auth.signOut();
+    localStorage.removeItem('cache_categories');
+    localStorage.removeItem('cache_transactions');
+    localStorage.removeItem('cache_recurring');
   }
 };

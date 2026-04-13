@@ -1,5 +1,6 @@
 import { api } from '../api';
 import Sortable from 'sortablejs';
+import { supabase } from '../supabase';
 
 const COMMON_EMOJIS = ['💰', '🍔', '🚃', '🏥', '🏠', '💡', '📱', '🎮', '👕', '✂️', '🎁', '🎓', '🏛️', '🍻', '💳', '📦'];
 
@@ -104,6 +105,11 @@ export async function renderSettings(container: HTMLElement) {
 }
 
 async function updateSettingsView(container: HTMLElement, useCache: boolean = false) {
+  const [{ data: sessionData }] = await Promise.all([
+    supabase.auth.getSession()
+  ]);
+  const user = sessionData.session?.user;
+
   let categories: any[], recurrings: any[];
   if (useCache) {
     categories = api.getCachedCategories();
@@ -121,6 +127,24 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
   const html = `
     <div class="h-full flex flex-col pt-8 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] overflow-y-auto">
       <h1 class="text-2xl font-bold text-gray-800 mb-6">設定</h1>
+
+      <!-- Account section -->
+      <section class="mb-8">
+        <h2 class="text-lg font-bold text-gray-700 mb-3">アカウント</h2>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 font-bold">
+              ${user?.email?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-gray-800 truncate">${user?.email || '未ログイン'}</div>
+            </div>
+          </div>
+          <button id="btn-logout" class="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold rounded-xl border border-gray-200 transition-colors text-sm">
+            ログアウト
+          </button>
+        </div>
+      </section>
 
       <!-- Recurring tasks settings -->
       <section class="mb-8">
@@ -273,6 +297,16 @@ async function updateSettingsView(container: HTMLElement, useCache: boolean = fa
     input.addEventListener('focus', () => showEmojiPicker(input));
     // Do not close on keydown to allow direct input
   });
+
+  // Logout
+  const btnLogout = document.getElementById('btn-logout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      if (!confirm('ログアウトしますか？')) return;
+      await api.logout();
+      // main.ts listening to auth changes will handle redirect
+    });
+  }
 
   // Recurring form
   const recurringForm = document.getElementById('form-add-recurring') as HTMLFormElement;
