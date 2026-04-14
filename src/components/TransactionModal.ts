@@ -23,8 +23,9 @@ export function createTransactionModal(
   const expenseCategories = categories.filter(c => c.type === 'expense');
 
   const modalHtml = `
-    <div id="transaction-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm opacity-0 transition-opacity duration-300 p-4">
-      <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl transform scale-95 opacity-0 transition-all duration-300">
+    <div id="transaction-modal" class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-30 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+      <div id="transaction-modal-backdrop" class="flex min-h-[100dvh] items-center justify-center p-4">
+        <div id="transaction-modal-inner" class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl transform scale-95 opacity-0 transition-all duration-300 relative">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-bold text-gray-800">${initialOptions?.isEdit ? '収支を編集' : '収支を追加'}</h2>
           <button id="modal-close-btn" class="text-gray-400 hover:text-gray-600 focus:outline-none">
@@ -126,12 +127,13 @@ export function createTransactionModal(
         </form>
       </div>
     </div>
+  </div>
   `;
 
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 
   const modal = document.getElementById('transaction-modal')!;
-  const inner = modal.firstElementChild!;
+  const inner = document.getElementById('transaction-modal-inner')!;
   const form = document.getElementById('transaction-form') as HTMLFormElement;
   const closeBtn = document.getElementById('modal-close-btn')!;
   
@@ -224,8 +226,22 @@ export function createTransactionModal(
 
   closeBtn.addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
+    const target = e.target as HTMLElement;
+    if (target === modal || target.id === 'transaction-modal-backdrop') closeModal();
   });
+
+  // 金額フォーカス時にスクロール位置を調整する（初回フォーカス時にキーボードで隠れないようにするため）
+  const txAmount = document.getElementById('tx-amount');
+  const txMemo = document.getElementById('tx-memo');
+  
+  const scrollToCenter = (e: Event) => {
+    setTimeout(() => {
+      (e.target as HTMLElement)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300); // ソフトウェアキーボードが表示されるまで少し待機
+  };
+
+  txAmount?.addEventListener('focus', scrollToCenter);
+  txMemo?.addEventListener('focus', scrollToCenter);
 
   // Filter categories by type
   typeRadios.forEach(radio => {
