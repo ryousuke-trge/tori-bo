@@ -1,5 +1,6 @@
 import type { Category } from '../types';
 import { formatDate } from '../utils/date';
+import { showMonthPicker } from './MonthPicker';
 
 export function createTransactionModal(
   categories: Category[],
@@ -49,7 +50,27 @@ export function createTransactionModal(
           <!-- Date -->
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">日付</label>
-            <input type="date" id="tx-date" name="date" required value="${initialOptions?.date || formatDate(new Date())}" class="w-full max-w-full min-w-0 appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 h-12 box-border" />
+            <div class="flex items-center gap-2">
+              <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-2 h-12 flex-1">
+                <button type="button" id="tx-prev-month" class="p-1 text-gray-500 hover:bg-gray-200 rounded-full transition-colors focus:outline-none">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <div id="tx-ym-header" class="text-base font-bold text-gray-800 flex items-center gap-1 cursor-pointer hover:opacity-80 mx-1">
+                  <span id="tx-ym-label"></span>
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <button type="button" id="tx-next-month" class="p-1 text-gray-500 hover:bg-gray-200 rounded-full transition-colors focus:outline-none">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </div>
+              <div class="bg-gray-50 border border-gray-200 rounded-lg h-12 w-24 relative flex items-center shrink-0">
+                <select id="tx-day-select" class="w-full h-full bg-transparent appearance-none pl-3 pr-8 text-base font-bold text-gray-800 focus:outline-none cursor-pointer">
+                  <!-- options populated by JS -->
+                </select>
+                <div class="absolute right-3 pointer-events-none text-gray-400 font-bold">日</div>
+              </div>
+            </div>
+            <input type="hidden" id="tx-date" name="date" value="${initialOptions?.date || formatDate(new Date())}" />
           </div>
 
           <!-- Asset -->
@@ -115,6 +136,73 @@ export function createTransactionModal(
   const catSelect = document.getElementById('tx-category') as HTMLSelectElement;
   const optExp = document.getElementById('optgroup-expense')!;
   const optInc = document.getElementById('optgroup-income')!;
+
+  const txDateInput = document.getElementById('tx-date') as HTMLInputElement;
+  const txYmLabel = document.getElementById('tx-ym-label')!;
+  const txDaySelect = document.getElementById('tx-day-select') as HTMLSelectElement;
+  const txPrevMonth = document.getElementById('tx-prev-month')!;
+  const txNextMonth = document.getElementById('tx-next-month')!;
+  const txYmHeader = document.getElementById('tx-ym-header')!;
+
+  let selectedDateObj = new Date(txDateInput.value);
+
+  const updateDateUI = () => {
+    const year = selectedDateObj.getFullYear();
+    const month = selectedDateObj.getMonth();
+    const day = selectedDateObj.getDate();
+    
+    txYmLabel.textContent = `${year}年 ${month + 1}月`;
+    
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    txDaySelect.innerHTML = '';
+    for (let i = 1; i <= daysInMonth; i++) {
+        const option = document.createElement('option');
+        option.value = i.toString();
+        option.textContent = i.toString();
+        if (i === day) option.selected = true;
+        txDaySelect.appendChild(option);
+    }
+    
+    const mStr = String(month + 1).padStart(2, '0');
+    const dStr = String(day).padStart(2, '0');
+    txDateInput.value = `${year}-${mStr}-${dStr}`;
+  };
+
+  updateDateUI();
+
+  const changeMonth = (delta: number) => {
+    let year = selectedDateObj.getFullYear();
+    let month = selectedDateObj.getMonth() + delta;
+    if (month < 0) { month = 11; year--; }
+    else if (month > 11) { month = 0; year++; }
+    
+    let day = selectedDateObj.getDate();
+    const daysInNewMonth = new Date(year, month + 1, 0).getDate();
+    if (day > daysInNewMonth) day = daysInNewMonth;
+    
+    selectedDateObj = new Date(year, month, day);
+    updateDateUI();
+  };
+
+  txPrevMonth.addEventListener('click', (e) => { e.preventDefault(); changeMonth(-1); });
+  txNextMonth.addEventListener('click', (e) => { e.preventDefault(); changeMonth(1); });
+
+  txYmHeader.addEventListener('click', () => {
+    showMonthPicker(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), (year, month) => {
+      let day = selectedDateObj.getDate();
+      const daysInNewMonth = new Date(year, month + 1, 0).getDate();
+      if (day > daysInNewMonth) day = daysInNewMonth;
+      
+      selectedDateObj = new Date(year, month, day);
+      updateDateUI();
+    });
+  });
+
+  txDaySelect.addEventListener('change', (e) => {
+    const newDay = parseInt((e.target as HTMLSelectElement).value, 10);
+    selectedDateObj.setDate(newDay);
+    updateDateUI();
+  });
 
   // Set initial category
   if (initialOptions?.category_id) {
