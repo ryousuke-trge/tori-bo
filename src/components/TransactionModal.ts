@@ -50,25 +50,28 @@ export function createTransactionModal(
           <!-- Date -->
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">日付</label>
-            <div class="flex items-center gap-2">
-              <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-2 h-12 flex-1">
-                <button type="button" id="tx-prev-month" class="p-1 text-gray-500 hover:bg-gray-200 rounded-full transition-colors focus:outline-none">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                </button>
-                <div id="tx-ym-header" class="text-base font-bold text-gray-800 flex items-center gap-1 cursor-pointer hover:opacity-80 mx-1">
+            <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-2 h-12">
+              <button type="button" id="tx-prev-day" class="p-1 text-gray-500 hover:bg-gray-200 rounded-full transition-colors focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              
+              <div class="flex-1 flex items-center justify-center gap-2">
+                <div id="tx-ym-header" class="text-base font-bold text-gray-800 flex items-center gap-1 cursor-pointer hover:opacity-80">
                   <span id="tx-ym-label"></span>
                   <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
-                <button type="button" id="tx-next-month" class="p-1 text-gray-500 hover:bg-gray-200 rounded-full transition-colors focus:outline-none">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                </button>
+                
+                <div class="relative w-16 h-full flex items-center justify-center">
+                  <select id="tx-day-select" class="w-full h-full bg-transparent appearance-none pl-1 pr-6 text-base font-bold text-gray-800 focus:outline-none cursor-pointer text-right">
+                    <!-- options populated by JS -->
+                  </select>
+                  <div class="absolute right-1 pointer-events-none text-gray-800 font-bold">日</div>
+                </div>
               </div>
-              <div class="bg-gray-50 border border-gray-200 rounded-lg h-12 w-24 relative flex items-center shrink-0">
-                <select id="tx-day-select" class="w-full h-full bg-transparent appearance-none pl-3 pr-8 text-base font-bold text-gray-800 focus:outline-none cursor-pointer">
-                  <!-- options populated by JS -->
-                </select>
-                <div class="absolute right-3 pointer-events-none text-gray-400 font-bold">日</div>
-              </div>
+
+              <button type="button" id="tx-next-day" class="p-1 text-gray-500 hover:bg-gray-200 rounded-full transition-colors focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+              </button>
             </div>
             <input type="hidden" id="tx-date" name="date" value="${initialOptions?.date || formatDate(new Date())}" />
           </div>
@@ -140,8 +143,8 @@ export function createTransactionModal(
   const txDateInput = document.getElementById('tx-date') as HTMLInputElement;
   const txYmLabel = document.getElementById('tx-ym-label')!;
   const txDaySelect = document.getElementById('tx-day-select') as HTMLSelectElement;
-  const txPrevMonth = document.getElementById('tx-prev-month')!;
-  const txNextMonth = document.getElementById('tx-next-month')!;
+  const txPrevDay = document.getElementById('tx-prev-day')!;
+  const txNextDay = document.getElementById('tx-next-day')!;
   const txYmHeader = document.getElementById('tx-ym-header')!;
 
   let selectedDateObj = new Date(txDateInput.value);
@@ -170,22 +173,13 @@ export function createTransactionModal(
 
   updateDateUI();
 
-  const changeMonth = (delta: number) => {
-    let year = selectedDateObj.getFullYear();
-    let month = selectedDateObj.getMonth() + delta;
-    if (month < 0) { month = 11; year--; }
-    else if (month > 11) { month = 0; year++; }
-    
-    let day = selectedDateObj.getDate();
-    const daysInNewMonth = new Date(year, month + 1, 0).getDate();
-    if (day > daysInNewMonth) day = daysInNewMonth;
-    
-    selectedDateObj = new Date(year, month, day);
+  const changeDay = (delta: number) => {
+    selectedDateObj.setDate(selectedDateObj.getDate() + delta);
     updateDateUI();
   };
 
-  txPrevMonth.addEventListener('click', (e) => { e.preventDefault(); changeMonth(-1); });
-  txNextMonth.addEventListener('click', (e) => { e.preventDefault(); changeMonth(1); });
+  txPrevDay.addEventListener('click', (e) => { e.preventDefault(); changeDay(-1); });
+  txNextDay.addEventListener('click', (e) => { e.preventDefault(); changeDay(1); });
 
   txYmHeader.addEventListener('click', () => {
     showMonthPicker(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), (year, month) => {
