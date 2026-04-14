@@ -211,11 +211,10 @@ async function updateHomeView(container: HTMLElement, useCache: boolean = false)
         memo: data.memo,
         asset_type: data.asset_type as "bank" | "cashless" | "cash" | undefined
       });
-        // Re-render after successful save
-        await updateHomeView(container);
-      }, { date: selectedDateStr });
-    });
-  }
+      // Re-render after successful save
+      await updateHomeView(container);
+    }, { date: selectedDateStr });
+  });
 }
 
 function showMonthPicker(currentYear: number, currentMonth: number, onSelect: (year: number, month: number) => void) {
