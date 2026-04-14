@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/japanese-holidays": "^1.0.3",
     "@types/sortablejs": "^1.15.9",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.27",
@@ -21,6 +22,7 @@
     "@fontsource/yomogi": "^5.2.7",
     "@fontsource/zen-kaku-gothic-new": "^5.2.7",
     "@supabase/supabase-js": "^2.101.1",
+    "japanese-holidays": "^1.0.10",
     "sortablejs": "^1.15.7",
     "uuid": "^13.0.0"
   }
