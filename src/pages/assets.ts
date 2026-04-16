@@ -3,6 +3,7 @@ import { supabase } from '../supabase';
 import type { AssetEntry } from '../types';
 
 export async function renderAssets(container: HTMLElement) {
+
   container.innerHTML = `
     <div class="flex items-center justify-center h-full">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
@@ -10,6 +11,7 @@ export async function renderAssets(container: HTMLElement) {
   `;
 
   try {
+
     const { data: sessionData } = await supabase.auth.getSession();
     const currentUserEmail = sessionData.session?.user?.email;
 
@@ -43,17 +45,18 @@ export async function renderAssets(container: HTMLElement) {
     futureTxs.forEach(tx => {
       if (!tx.asset_type) return;
       const author = tx.author_name || '';
-      
+
       if (!futureDeltas.has(author)) futureDeltas.set(author, { bank: 0, cashless: 0, cash: 0 });
       if (!monthEndDeltas.has(author)) monthEndDeltas.set(author, { bank: 0, cashless: 0, cash: 0 });
-      
+
       const isIncome = tx.categories?.type === 'income';
       const amt = isIncome ? tx.amount : -tx.amount;
       const key = tx.asset_type as 'bank' | 'cashless' | 'cash';
-      
+
       if (tx.date > todayStr) {
         futureDeltas.get(author)![key] += amt;
       }
+
       if (tx.date > endOfMonthStr) {
         monthEndDeltas.get(author)![key] += amt;
       }
@@ -74,13 +77,15 @@ export async function renderAssets(container: HTMLElement) {
         let bank = asset.bank || 0;
         let cashless = asset.cashless || 0;
         let cash = asset.cash || 0;
-        
+
         if (currentPeriod === 'today') {
+
           const fd = futureDeltas.get(author) || { bank: 0, cashless: 0, cash: 0 };
           bank -= fd.bank;
           cashless -= fd.cashless;
           cash -= fd.cash;
         } else if (currentPeriod === 'monthend') {
+
           const md = monthEndDeltas.get(author) || { bank: 0, cashless: 0, cash: 0 };
           bank -= md.bank;
           cashless -= md.cashless;
@@ -101,8 +106,7 @@ export async function renderAssets(container: HTMLElement) {
       const netAssets = totalAssets + totalLiabilities;
 
       let html = `<div class="p-6 bg-[#fafafa] min-h-full pb-28 relative font-sans">`;
-      
-      // Top Header
+
       html += `
         <div class="flex items-center gap-6 mb-6 pt-2">
           <div id="tab-today" class="text-sm font-medium cursor-pointer transition-colors ${currentPeriod === 'today' ? 'text-gray-800 border-b-2 border-[#7ddb87] pb-1' : 'text-gray-400 pb-1'}">
@@ -114,7 +118,6 @@ export async function renderAssets(container: HTMLElement) {
         </div>
       `;
 
-      // Main Card
       html += `
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8 mt-2 flex flex-col items-center justify-center">
           <div class="text-sm text-gray-500 font-medium mb-2 flex items-center gap-1.5">
@@ -147,7 +150,6 @@ export async function renderAssets(container: HTMLElement) {
 
       html += `</div>`;
 
-      // モーダル
       html += `
         <div id="edit-asset-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-[100] backdrop-blur-sm transition-opacity opacity-0 px-4">
           <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl transform scale-95 transition-transform duration-300">
@@ -170,7 +172,7 @@ export async function renderAssets(container: HTMLElement) {
 
     const renderAssetCard = (id: string, type: string, subtitle: string, icon: string, amount: number, authorName: string, displayName: string) => {
       const amountClass = amount < 0 ? "text-red-400" : "text-[#62d278]";
-      
+
       let avatarHtml = `
         <div class="w-10 h-10 bg-[#f4f7f9] text-gray-500 rounded-full flex items-center justify-center text-xl shadow-sm">
           ${icon}
@@ -225,20 +227,19 @@ export async function renderAssets(container: HTMLElement) {
 
       const openModal = (id: string, type: string, name: string, amount: number, authorName: string) => {
         if (!modal || !titleEl || !inputEl || !typeEl || !idEl || !authorEl) return;
+
         titleEl.textContent = `${name}の残高`;
         inputEl.value = amount.toString();
         typeEl.value = type;
         idEl.value = id;
         authorEl.value = authorName;
-        
+
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        
         void modal.offsetWidth;
-        
         modal.classList.remove('opacity-0');
         modal.firstElementChild?.classList.remove('scale-95');
-        
+
         setTimeout(() => {
           inputEl.focus();
           inputEl.select();
@@ -249,7 +250,7 @@ export async function renderAssets(container: HTMLElement) {
         if (!modal) return;
         modal.classList.add('opacity-0');
         modal.firstElementChild?.classList.add('scale-95');
-        
+
         setTimeout(() => {
           modal.classList.add('hidden');
           modal.classList.remove('flex');
@@ -275,12 +276,12 @@ export async function renderAssets(container: HTMLElement) {
 
       btnSave?.addEventListener('click', async () => {
         if (!inputEl || !typeEl || !btnSave || !idEl || !authorEl) return;
-        
+
         const newValue = parseInt(inputEl.value || '0', 10);
         const type = typeEl.value as keyof Pick<AssetEntry, 'bank'|'cashless'|'cash'>;
         const targetId = idEl.value;
         const targetAuthor = authorEl.value;
-        
+
         let adjustedValue = newValue;
         if (currentPeriod === 'today') {
           const fd = futureDeltas.get(targetAuthor) || { bank: 0, cashless: 0, cash: 0 };
@@ -302,14 +303,14 @@ export async function renderAssets(container: HTMLElement) {
           }
 
           const updatedAsset = await api.updateAssets(targetId, updates);
-          
+
           const idx = allAssets.findIndex(a => targetId ? a.id === targetId : a.author_name === targetAuthor);
           if (idx >= 0) {
             allAssets[idx] = updatedAsset;
           } else {
             allAssets.push(updatedAsset);
           }
-          
+
           closeModal();
           setTimeout(render, 300);
         } catch (err) {
@@ -326,6 +327,7 @@ export async function renderAssets(container: HTMLElement) {
     render();
 
   } catch (err) {
+
     console.error(err);
     container.innerHTML = `
       <div class="p-8 text-center bg-gray-50 h-full flex flex-col justify-center">

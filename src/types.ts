@@ -1,7 +1,7 @@
 export interface Category {
   id: string;
   name: string;
-  icon: string; // Emoji
+  icon: string;
   type: 'income' | 'expense';
   sort_order?: number;
   created_at?: string;
@@ -9,7 +9,7 @@ export interface Category {
 
 export interface Transaction {
   id: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   amount: number;
   category_id: string;
   memo: string;
@@ -27,9 +27,9 @@ export interface RecurringTask {
   title: string;
   amount: number;
   category_id: string;
-  day_of_month?: number; // Keep for migration
-  start_date: string; // YYYY-MM-DD
-  frequency: string; // 'daily', 'weekly', 'monthly', etc.
+  day_of_month?: number;
+  start_date: string;
+  frequency: string;
   created_at?: string;
 }
 

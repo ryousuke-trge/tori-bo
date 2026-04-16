@@ -5,7 +5,7 @@ export function renderLogin(container: HTMLElement) {
     <div class="h-full flex flex-col items-center justify-center p-6 bg-gray-50">
       <div class="w-full max-w-sm bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">とりーぼ</h1>
-        
+
         <form id="login-form" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
@@ -15,9 +15,9 @@ export function renderLogin(container: HTMLElement) {
             <label class="block text-sm font-medium text-gray-700 mb-1">パスワード</label>
             <input type="password" id="login-password" required class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="••••••••">
           </div>
-          
+
           <div id="login-error" class="text-red-500 text-sm hidden text-center"></div>
-          
+
           <button type="submit" id="btn-login" class="w-full py-3 bg-yellow-400 text-white font-bold rounded-xl shadow-md hover:bg-yellow-500 transition-colors">
             ログイン
           </button>
@@ -61,6 +61,7 @@ export function renderLogin(container: HTMLElement) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     clearError();
+
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
@@ -70,14 +71,15 @@ export function renderLogin(container: HTMLElement) {
     btnLogin.textContent = 'ログイン中...';
 
     try {
+
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        throw error;
-      }
-      // Success, main.ts will detect onAuthStateChange and handle route
+
+      if (error) throw error;
+
     } catch (err: any) {
       console.error(err);
       showError(err.message === 'Invalid login credentials' ? 'メールアドレスまたはパスワードが間違っています' : err.message || 'ログインに失敗しました');
+
       btnLogin.disabled = false;
       btnLogin.textContent = 'ログイン';
     }
@@ -102,7 +104,7 @@ export function renderLogin(container: HTMLElement) {
         throw error;
       }
       alert('アカウントが作成されました！そのままログインしました。');
-      // Success
+
     } catch (err: any) {
       console.error(err);
       showError(err.message || 'アカウント作成に失敗しました');

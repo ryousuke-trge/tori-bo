@@ -1,8 +1,9 @@
 import { supabase } from './supabase';
+
 import type { Category, Transaction, RecurringTask, TransactionWithCategory, RecurringTaskWithCategory, AssetEntry, Profile } from './types';
 
 export const api = {
-  // --- Cache Helpers ---
+
   getCachedCategories(): Category[] {
     try { return JSON.parse(localStorage.getItem('cache_categories') || '[]'); } catch { return []; }
   },
@@ -18,8 +19,11 @@ export const api = {
   getCachedProfiles(): Profile[] {
     try { return JSON.parse(localStorage.getItem('cache_profiles') || '[]'); } catch { return []; }
   },
+  async getCurrentUserEmail(): Promise<string | undefined> {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.user?.email;
+  },
 
-  // --- Categories ---
   async getCategories() {
     const { data, error } = await supabase
       .from('categories')
@@ -40,7 +44,7 @@ export const api = {
     return data as Category;
   },
   async updateCategoryOrders(updates: { id: string; sort_order: number }[]) {
-    // Execute multiple updates
+
     const promises = updates.map(u => supabase.from('categories').update({ sort_order: u.sort_order }).eq('id', u.id));
     const results = await Promise.all(promises);
     for (const res of results) {
@@ -52,7 +56,6 @@ export const api = {
     if (error) throw error;
   },
 
-  // --- Transactions ---
   async getTransactions(startDate: string, endDate: string) {
     const { data, error } = await supabase
       .from('transactions')
@@ -62,9 +65,6 @@ export const api = {
       .order('date', { ascending: true });
     if (error) throw error;
 
-    // Save fetched transaction data to cache (merge with existing data or replace this range)
-    // Note: As a simple lightweight app, we save or merge the latest fetched block.
-    // Merge to accumulate data.
     try {
       const existing: TransactionWithCategory[] = JSON.parse(localStorage.getItem('cache_transactions') || '[]');
       const others = existing.filter(t => t.date < startDate || t.date > endDate);
@@ -76,29 +76,29 @@ export const api = {
 
     return data as TransactionWithCategory[];
   },
-  async addTransaction(tx: Omit<Transaction, 'id' | 'created_at' | 'author_name'>) {
+
+  async addTransaction(tx: Omit<Transaction, 'id' | 'created_at'>) {
     const { data: sessionData } = await supabase.auth.getSession();
-    const author_name = sessionData.session?.user?.email;
+    const author_name = tx.author_name || sessionData.session?.user?.email;
 
     const { data, error } = await supabase.from('transactions').insert({
       ...tx,
+      asset_type: tx.asset_type || 'cash',
       author_name
     }).select().single();
     if (error) throw error;
 
-    // Update Asset
-    if (tx.asset_type) {
-      const category = this.getCachedCategories().find(c => c.id === tx.category_id);
-      if (category) {
-        let assets = await this.getAssets();
-        const key = tx.asset_type as 'bank' | 'cashless' | 'cash';
-        const currentAmount = assets[key] || 0;
-        const diff = category.type === 'income' ? tx.amount : -tx.amount;
-        
-        await this.updateAssets(assets.id, {
-          [key]: currentAmount + diff
-        });
-      }
+    const assetType = tx.asset_type || 'cash';
+    const category = this.getCachedCategories().find(c => c.id === tx.category_id);
+    if (category) {
+      let assets = await this.getAssets();
+      const key = assetType as 'bank' | 'cashless' | 'cash';
+      const currentAmount = assets[key] || 0;
+      const diff = category.type === 'income' ? tx.amount : -tx.amount;
+
+      await this.updateAssets(assets.id, {
+        [key]: currentAmount + diff
+      });
     }
 
     return data as Transaction;
@@ -107,13 +107,18 @@ export const api = {
     const { data: oldTx, error: fetchError } = await supabase.from('transactions').select('*, categories(*)').eq('id', id).single();
     if (fetchError) throw fetchError;
 
-    const { data, error } = await supabase.from('transactions').update(updates).eq('id', id).select().single();
+    const payload = { ...updates };
+    if (!payload.asset_type) {
+      payload.asset_type = oldTx.asset_type || 'cash';
+    }
+
+    const { data, error } = await supabase.from('transactions').update(payload).eq('id', id).select().single();
     if (error) throw error;
 
-    // Update assets based on difference
     let assets = await this.getAssets();
     let oldCatType = oldTx.categories?.type || this.getCachedCategories().find(c => c.id === oldTx.category_id)?.type;
-    let newAssetType = updates.asset_type !== undefined ? updates.asset_type : oldTx.asset_type;
+    let oldAssetType = oldTx.asset_type || 'cash';
+    let newAssetType = payload.asset_type;
     let newCatId = updates.category_id || oldTx.category_id;
     let newAmount = updates.amount !== undefined ? updates.amount : oldTx.amount;
     let newCategory = this.getCachedCategories().find(c => c.id === newCatId);
@@ -121,13 +126,13 @@ export const api = {
 
     let assetUpdates: Partial<AssetEntry> = {};
 
-    if (oldTx.asset_type && oldCatType) {
+    if (oldCatType) {
         const removeDiff = oldCatType === 'income' ? -oldTx.amount : oldTx.amount;
-        const key = oldTx.asset_type as 'bank' | 'cashless' | 'cash';
+        const key = oldAssetType as 'bank' | 'cashless' | 'cash';
         assetUpdates[key] = (assets[key] || 0) + removeDiff;
     }
 
-    if (newAssetType && newCatType) {
+    if (newCatType) {
         const addDiff = newCatType === 'income' ? newAmount : -newAmount;
         const key = newAssetType as 'bank' | 'cashless' | 'cash';
         if (assetUpdates[key] !== undefined) {
@@ -145,15 +150,16 @@ export const api = {
   },
   async deleteTransaction(id: string) {
     const { data: oldTx, error: fetchError } = await supabase.from('transactions').select('*, categories(*)').eq('id', id).maybeSingle();
-    
+
     const { error } = await supabase.from('transactions').delete().eq('id', id);
     if (error) throw error;
 
-    if (oldTx && !fetchError && oldTx.asset_type) {
+    if (oldTx && !fetchError) {
         const oldCatType = oldTx.categories?.type || this.getCachedCategories().find(c => c.id === oldTx.category_id)?.type;
+        const oldAssetType = oldTx.asset_type || 'cash';
         if (oldCatType) {
             let assets = await this.getAssets();
-            const key = oldTx.asset_type as 'bank' | 'cashless' | 'cash';
+            const key = oldAssetType as 'bank' | 'cashless' | 'cash';
             const diff = oldCatType === 'income' ? -oldTx.amount : oldTx.amount;
             await this.updateAssets(assets.id, {
                 [key]: (assets[key] || 0) + diff
@@ -162,7 +168,6 @@ export const api = {
     }
   },
 
-  // --- Recurring Tasks ---
   async getRecurringTasks() {
     const { data, error } = await supabase.from('recurring').select('*, categories(*)');
     if (error) throw error;
@@ -179,12 +184,12 @@ export const api = {
     if (error) throw error;
   },
 
-  // --- Assets ---
   async getAllAssets() {
     const { data, error } = await supabase.from('assets').select('*');
     if (error) throw error;
     return data as AssetEntry[];
   },
+
   async getAssets() {
     const { data: sessionData } = await supabase.auth.getSession();
     const author_name = sessionData.session?.user?.email;
@@ -196,7 +201,7 @@ export const api = {
       .maybeSingle();
 
     if (error) throw error;
-    // 如果没有数据，返回默认的初始状态（理论上 SQL 已经插入了一条）
+
     if (!data) {
       return { id: '', bank: 0, cashless: 0, cash: 0, author_name } as AssetEntry;
     }
@@ -207,7 +212,7 @@ export const api = {
     const author_name = sessionData.session?.user?.email;
 
     if (!id) {
-       // idがない場合はinsertを試みる
+
        const finalAuthorName = (updates as any).author_name || author_name;
        const { data, error } = await supabase.from('assets').insert({ ...updates, author_name: finalAuthorName }).select().single();
        if (error) throw error;
@@ -218,7 +223,6 @@ export const api = {
     return data as AssetEntry;
   },
 
-  // --- Profiles ---
   async getProfiles() {
     const { data, error } = await supabase.from('profiles').select('*');
     if (error) throw error;
@@ -231,7 +235,6 @@ export const api = {
     return data as Profile;
   },
 
-  // --- Auth utils ---
   async logout() {
     await supabase.auth.signOut();
     localStorage.removeItem('cache_categories');

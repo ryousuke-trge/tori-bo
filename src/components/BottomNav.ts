@@ -1,11 +1,14 @@
 export function renderBottomNav(container: HTMLElement, currentHash: string) {
+
   const isHome = currentHash === '' || currentHash === '#/';
   const isStats = currentHash === '#/stats';
   const isAssets = currentHash === '#/assets';
   const isSettings = currentHash === '#/settings';
 
   const baseClass = "flex flex-col items-center justify-center w-full h-full text-sm font-medium transition-colors";
+
   const activeClass = "text-yellow-400";
+
   const inactiveClass = "text-gray-400 hover:text-gray-600";
 
   container.innerHTML = `

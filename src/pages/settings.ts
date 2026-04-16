@@ -20,7 +20,6 @@ const FREQUENCY_LABELS: Record<string, string> = {
   yearly: '毎年ごと'
 };
 
-// Initialize global emoji picker
 let pickerEl: HTMLElement | null = null;
 let activeEmojiInput: HTMLInputElement | null = null;
 
@@ -57,20 +56,19 @@ function showEmojiPicker(input: HTMLInputElement) {
   activeEmojiInput = input;
   if (!pickerEl) return;
   pickerEl.classList.remove('hidden');
-  
+
   const rect = input.getBoundingClientRect();
-  
-  // Adjust to stay within screen bounds
+
   let top = rect.bottom + window.scrollY + 4;
   let left = rect.left + window.scrollX;
-  
+
   if (left + 220 > window.innerWidth) {
     left = window.innerWidth - 230;
   }
-  
+
   pickerEl.style.top = `${top}px`;
   pickerEl.style.left = `${Math.max(10, left)}px`;
-  
+
   requestAnimationFrame(() => pickerEl!.classList.add('opacity-100'));
 }
 
@@ -81,18 +79,17 @@ function closeEmojiPicker() {
   activeEmojiInput = null;
 }
 
-// Global state for settings page routing
 let currentView: 'main' | 'category' | 'recurring' = 'main';
 let stateData: { user: any; categories: any[]; recurrings: any[]; profiles: any[] } | null = null;
 
 export async function renderSettings(container: HTMLElement) {
   initEmojiPicker();
-  currentView = 'main'; // Reset view on initial tab load
+  currentView = 'main';
 
   try {
     const cachedCategories = api.getCachedCategories();
     if (cachedCategories.length === 0 && !localStorage.getItem('cache_categories')) {
-      throw new Error('No cache'); 
+      throw new Error('No cache');
     }
     await updateSettingsData(container, true);
   } catch (e) {
@@ -138,6 +135,7 @@ function renderCurrentView(container: HTMLElement) {
   const { user, categories, recurrings, profiles } = stateData;
   const myProfile = profiles?.find((p: any) => p.email === user?.email);
   const displayName = myProfile?.display_name || '';
+
   const expenseCategories = categories.filter(c => c.type === 'expense');
   const incomeCategories = categories.filter(c => c.type === 'income');
 
@@ -146,7 +144,6 @@ function renderCurrentView(container: HTMLElement) {
       <div class="h-full flex flex-col pt-8 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] overflow-y-auto">
         <h1 class="text-2xl font-bold text-gray-800 mb-6">設定</h1>
 
-        <!-- Account section -->
         <section class="mb-8">
           <h2 class="text-lg font-bold text-gray-700 mb-3">アカウント</h2>
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col gap-4">
@@ -171,7 +168,6 @@ function renderCurrentView(container: HTMLElement) {
           </div>
         </section>
 
-        <!-- Menu section -->
         <section class="mb-8">
           <h2 class="text-lg font-bold text-gray-700 mb-3">詳細設定</h2>
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -184,7 +180,7 @@ function renderCurrentView(container: HTMLElement) {
               </div>
               <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
             </div>
-            
+
             <div id="btn-go-recurring" class="flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer transition-colors">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-green-50 text-green-500 flex items-center justify-center">
@@ -215,8 +211,10 @@ function renderCurrentView(container: HTMLElement) {
     profileForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!user?.email) return;
+
       const data = new FormData(profileForm);
       const newName = data.get('display_name') as string;
+
       const submitBtn = profileForm.querySelector('button[type="submit"]') as HTMLButtonElement;
       submitBtn.disabled = true;
       submitBtn.textContent = '保存中...';
@@ -342,7 +340,7 @@ function renderCurrentView(container: HTMLElement) {
           </button>
           <h1 class="text-xl font-bold text-gray-800">カテゴリ管理</h1>
         </div>
-        
+
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 p-4">
           <h2 class="text-sm font-bold text-gray-500 mb-3">新しいカテゴリを追加</h2>
           <form id="form-add-category" class="flex items-center gap-1 sm:gap-2">
@@ -360,7 +358,7 @@ function renderCurrentView(container: HTMLElement) {
         <div id="expense-categories-list" class="flex flex-col gap-2 mb-8">
           ${expenseCategories.map(c => `
             <div class="category-item bg-white border border-gray-100 p-3 rounded-xl flex flex-col shadow-sm" data-id="${c.id}">
-              <!-- View mode -->
+
               <div class="category-view flex items-center justify-between">
                 <div class="flex items-center gap-3 overflow-hidden">
                   <div class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 active:cursor-grabbing p-1" title="並べ替え">
@@ -378,8 +376,7 @@ function renderCurrentView(container: HTMLElement) {
                   </button>
                 </div>
               </div>
-              
-              <!-- Edit mode -->
+
               <form class="category-edit-form hidden flex items-center gap-1 sm:gap-2 mt-3 pt-3 border-t border-gray-50" data-id="${c.id}">
                 <select name="type" required class="bg-gray-50 border border-gray-200 rounded-md px-1 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none shrink-0 border-r-4 border-transparent">
                   <option value="expense" ${c.type === 'expense' ? 'selected' : ''}>支出</option>
@@ -398,7 +395,7 @@ function renderCurrentView(container: HTMLElement) {
         <div id="income-categories-list" class="flex flex-col gap-2 mb-8">
           ${incomeCategories.map(c => `
             <div class="category-item bg-white border border-gray-100 p-3 rounded-xl flex flex-col shadow-sm" data-id="${c.id}">
-              <!-- View mode -->
+
               <div class="category-view flex items-center justify-between">
                 <div class="flex items-center gap-3 overflow-hidden">
                   <div class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 active:cursor-grabbing p-1" title="並べ替え">
@@ -416,8 +413,7 @@ function renderCurrentView(container: HTMLElement) {
                   </button>
                 </div>
               </div>
-              
-              <!-- Edit mode -->
+
               <form class="category-edit-form hidden flex items-center gap-1 sm:gap-2 mt-3 pt-3 border-t border-gray-50" data-id="${c.id}">
                 <select name="type" required class="bg-gray-50 border border-gray-200 rounded-md px-1 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none shrink-0 border-r-4 border-transparent">
                   <option value="expense" ${c.type === 'expense' ? 'selected' : ''}>支出</option>
@@ -501,17 +497,17 @@ function renderCurrentView(container: HTMLElement) {
         const formEl = e.currentTarget as HTMLFormElement;
         const id = formEl.dataset.id!;
         const data = new FormData(formEl);
-        
+
         const newType = data.get('type') as 'income' | 'expense';
         const newIcon = data.get('icon') as string;
         const newName = data.get('name') as string;
-        
+
         await api.updateCategory(id, {
           type: newType,
           icon: newIcon,
           name: newName
         });
-        
+
         closeEmojiPicker();
         await updateSettingsData(container);
       });
@@ -523,6 +519,7 @@ function renderCurrentView(container: HTMLElement) {
         Sortable.create(el, {
           handle: '.drag-handle',
           animation: 150,
+
           onEnd: async (evt) => {
             const listEl = evt.to;
             const items = Array.from(listEl.querySelectorAll('.category-item'));
@@ -532,6 +529,7 @@ function renderCurrentView(container: HTMLElement) {
             }));
             try {
               await api.updateCategoryOrders(updates);
+
               const cache = api.getCachedCategories();
               updates.forEach(u => {
                 const c = cache.find(cat => cat.id === u.id);

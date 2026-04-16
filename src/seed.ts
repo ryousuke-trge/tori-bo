@@ -24,10 +24,14 @@ const INITIAL_CATEGORIES = [
 
 export async function initCategoriesIfEmpty() {
   try {
+
     const categories = await api.getCategories();
+
     if (categories.length === 0) {
       console.log('Inserting initial categories...');
+
       for (const cat of INITIAL_CATEGORIES) {
+
         await api.addCategory({
           name: cat.name,
           icon: cat.icon,

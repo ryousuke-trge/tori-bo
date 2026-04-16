@@ -8,12 +8,17 @@ export function renderDailyTransactionsList(
   onDelete: (id: string) => Promise<void>,
   onEdit?: (tx: TransactionWithCategory) => void
 ) {
+
   const [y, m, d] = dateStr.split('-');
+
   const displayDate = `${y}年${Number(m)}月${Number(d)}日`;
 
   const totalIncome = transactions.filter(t => t.categories?.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+
   const totalExpense = transactions.filter(t => t.categories?.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
   const balance = totalIncome - totalExpense;
+
   const isPlus = balance >= 0;
 
   let html = `
@@ -36,10 +41,14 @@ export function renderDailyTransactionsList(
       </div>
     `;
   } else {
+
     const profiles = api.getCachedProfiles();
     html += `<ul class="space-y-3">`;
+
     for (const tx of transactions) {
+
       const isIncome = tx.categories?.type === 'income';
+
       const authorProfile = profiles.find(p => p.email === tx.author_name);
       const authorName = authorProfile?.display_name || tx.author_name;
 
@@ -66,26 +75,37 @@ export function renderDailyTransactionsList(
         </li>
       `;
     }
+
     html += `</ul>`;
   }
 
   html += `</div>`;
+
   container.innerHTML = html;
 
   const deleteBtns = container.querySelectorAll('.dtl-delete-btn');
+
   deleteBtns.forEach(btn => {
+
     btn.addEventListener('click', async (e) => {
+
       e.stopPropagation();
+
       const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id');
+
       if (id && confirm('この取引を削除してもよろしいですか？')) {
+
         const originalHtml = btn.innerHTML;
         btn.innerHTML = `<svg class="w-5 h-5 animate-spin text-red-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
         btn.setAttribute('disabled', 'true');
+
         try {
+
           await onDelete(id);
         } catch (error) {
           console.error(error);
           alert('削除に失敗しました');
+
           btn.innerHTML = originalHtml;
           btn.removeAttribute('disabled');
         }
@@ -95,13 +115,17 @@ export function renderDailyTransactionsList(
 
   const items = container.querySelectorAll('.dtl-item');
   items.forEach(item => {
+
     item.addEventListener('click', (e) => {
-      // Do not trigger when delete button is clicked
+
       if ((e.target as HTMLElement).closest('.dtl-delete-btn')) return;
-      
+
       const id = item.getAttribute('data-id');
+
       const tx = transactions.find(t => t.id === id);
+
       if (tx && onEdit) {
+
         onEdit(tx);
       }
     });
