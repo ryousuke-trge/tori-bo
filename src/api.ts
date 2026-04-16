@@ -91,13 +91,14 @@ export const api = {
     const assetType = tx.asset_type || 'cash';
     const category = this.getCachedCategories().find(c => c.id === tx.category_id);
     if (category) {
-      let assets = await this.getAssets();
+      let assets = await this.getAssets(author_name);
       const key = assetType as 'bank' | 'cashless' | 'cash';
       const currentAmount = assets[key] || 0;
       const diff = category.type === 'income' ? tx.amount : -tx.amount;
 
       await this.updateAssets(assets.id, {
-        [key]: currentAmount + diff
+        [key]: currentAmount + diff,
+        author_name
       });
     }
 
@@ -115,7 +116,10 @@ export const api = {
     const { data, error } = await supabase.from('transactions').update(payload).eq('id', id).select().single();
     if (error) throw error;
 
-    let assets = await this.getAssets();
+    const currentUser = await this.getCurrentUserEmail();
+    let oldAuthor = oldTx.author_name || currentUser;
+    let newAuthor = payload.author_name !== undefined ? payload.author_name : oldAuthor;
+
     let oldCatType = oldTx.categories?.type || this.getCachedCategories().find(c => c.id === oldTx.category_id)?.type;
     let oldAssetType = oldTx.asset_type || 'cash';
     let newAssetType = payload.asset_type;
@@ -124,26 +128,49 @@ export const api = {
     let newCategory = this.getCachedCategories().find(c => c.id === newCatId);
     let newCatType = newCategory ? newCategory.type : null;
 
-    let assetUpdates: Partial<AssetEntry> = {};
+    if (oldAuthor === newAuthor) {
+      let assets = await this.getAssets(oldAuthor);
+      let assetUpdates: Partial<AssetEntry> = {};
 
-    if (oldCatType) {
-        const removeDiff = oldCatType === 'income' ? -oldTx.amount : oldTx.amount;
-        const key = oldAssetType as 'bank' | 'cashless' | 'cash';
-        assetUpdates[key] = (assets[key] || 0) + removeDiff;
-    }
+      if (oldCatType) {
+          const removeDiff = oldCatType === 'income' ? -oldTx.amount : oldTx.amount;
+          const key = oldAssetType as 'bank' | 'cashless' | 'cash';
+          assetUpdates[key] = (assets[key] || 0) + removeDiff;
+      }
 
-    if (newCatType) {
-        const addDiff = newCatType === 'income' ? newAmount : -newAmount;
-        const key = newAssetType as 'bank' | 'cashless' | 'cash';
-        if (assetUpdates[key] !== undefined) {
-            assetUpdates[key] = (assetUpdates[key] as number) + addDiff;
-        } else {
-            assetUpdates[key] = (assets[key] || 0) + addDiff;
-        }
-    }
+      if (newCatType) {
+          const addDiff = newCatType === 'income' ? newAmount : -newAmount;
+          const key = newAssetType as 'bank' | 'cashless' | 'cash';
+          if (assetUpdates[key] !== undefined) {
+              assetUpdates[key] = (assetUpdates[key] as number) + addDiff;
+          } else {
+              assetUpdates[key] = (assets[key] || 0) + addDiff;
+          }
+      }
 
-    if (Object.keys(assetUpdates).length > 0) {
-        await this.updateAssets(assets.id, assetUpdates);
+      if (Object.keys(assetUpdates).length > 0) {
+          assetUpdates.author_name = oldAuthor;
+          await this.updateAssets(assets.id, assetUpdates);
+      }
+    } else {
+      if (oldCatType) {
+          let oldAssets = await this.getAssets(oldAuthor);
+          const removeDiff = oldCatType === 'income' ? -oldTx.amount : oldTx.amount;
+          const key = oldAssetType as 'bank' | 'cashless' | 'cash';
+          await this.updateAssets(oldAssets.id, {
+             [key]: (oldAssets[key] || 0) + removeDiff,
+             author_name: oldAuthor
+          });
+      }
+      if (newCatType) {
+          let newAssets = await this.getAssets(newAuthor);
+          const addDiff = newCatType === 'income' ? newAmount : -newAmount;
+          const key = newAssetType as 'bank' | 'cashless' | 'cash';
+          await this.updateAssets(newAssets.id, {
+             [key]: (newAssets[key] || 0) + addDiff,
+             author_name: newAuthor
+          });
+      }
     }
 
     return data as Transaction;
@@ -158,11 +185,14 @@ export const api = {
         const oldCatType = oldTx.categories?.type || this.getCachedCategories().find(c => c.id === oldTx.category_id)?.type;
         const oldAssetType = oldTx.asset_type || 'cash';
         if (oldCatType) {
-            let assets = await this.getAssets();
+            const currentUser = await this.getCurrentUserEmail();
+            const txAuthor = oldTx.author_name || currentUser;
+            let assets = await this.getAssets(txAuthor);
             const key = oldAssetType as 'bank' | 'cashless' | 'cash';
             const diff = oldCatType === 'income' ? -oldTx.amount : oldTx.amount;
             await this.updateAssets(assets.id, {
-                [key]: (assets[key] || 0) + diff
+                [key]: (assets[key] || 0) + diff,
+                author_name: txAuthor
             });
         }
     }
@@ -190,9 +220,9 @@ export const api = {
     return data as AssetEntry[];
   },
 
-  async getAssets() {
+  async getAssets(authorEmail?: string) {
     const { data: sessionData } = await supabase.auth.getSession();
-    const author_name = sessionData.session?.user?.email;
+    const author_name = authorEmail || sessionData.session?.user?.email;
 
     const { data, error } = await supabase.from('assets')
       .select('*')
@@ -208,12 +238,12 @@ export const api = {
     return data as AssetEntry;
   },
   async updateAssets(id: string, updates: Partial<Omit<AssetEntry, 'id' | 'updated_at'>>) {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const author_name = sessionData.session?.user?.email;
-
     if (!id) {
-
-       const finalAuthorName = (updates as any).author_name || author_name;
+       let finalAuthorName = (updates as any).author_name;
+       if (!finalAuthorName) {
+           const { data: sessionData } = await supabase.auth.getSession();
+           finalAuthorName = sessionData.session?.user?.email;
+       }
        const { data, error } = await supabase.from('assets').insert({ ...updates, author_name: finalAuthorName }).select().single();
        if (error) throw error;
        return data as AssetEntry;
